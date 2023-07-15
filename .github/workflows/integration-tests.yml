@@ -129,3 +129,14 @@ jobs:
           echo "{ \"dependencies\": { \"knex\": \"git+file://$(pwd)/\" } }" > TMP/package.json
           cd TMP/
           npm install --verbose
+        if: matrix.node-version != '12.x'
+        
+        - name: Test npm git dependency (Node 12 with older better-sqlite3)
+        shell: bash
+        run: |
+          mkdir TMP/
+          echo "{ \"dependencies\": { \"knex\": \"git+file://$(pwd)/\" } }" > TMP/package.json
+          cd TMP/
+          npm install better-sqlite@7.6.2
+          npm install --verbose
+        if: matrix.node-version == '12.x'
