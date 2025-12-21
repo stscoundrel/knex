@@ -879,6 +879,10 @@ describe('QueryBuilder', () => {
         sql: 'select * from [users] where [name] collate SQL_Latin1_General_CP1_CI_AS like ?',
         bindings: ['luk%'],
       },
+      sqlite3: {
+        sql: 'select * from `users` where `name` like ?',
+        bindings: ['luk%'],
+      },
     });
   });
 
@@ -901,6 +905,10 @@ describe('QueryBuilder', () => {
         },
         mssql: {
           sql: 'select * from [users] where [name] collate SQL_Latin1_General_CP1_CS_AS like ? and [name] collate SQL_Latin1_General_CP1_CS_AS like ? or [name] collate SQL_Latin1_General_CP1_CS_AS like ?',
+          bindings: ['luk1%', 'luk2%', 'luk3%'],
+        },
+        sqlite3: {
+          sql: 'select * from `users` where `name` like ? and `name` like ? or `name` like ?',
           bindings: ['luk1%', 'luk2%', 'luk3%'],
         },
       }
@@ -926,6 +934,10 @@ describe('QueryBuilder', () => {
         },
         mssql: {
           sql: 'select * from [users] where [name] collate SQL_Latin1_General_CP1_CI_AS like ? and [name] collate SQL_Latin1_General_CP1_CI_AS like ? or [name] collate SQL_Latin1_General_CP1_CI_AS like ?',
+          bindings: ['luk1%', 'luk2%', 'luk3%'],
+        },
+        sqlite3: {
+          sql: 'select * from `users` where `name` like ? and `name` like ? or `name` like ?',
           bindings: ['luk1%', 'luk2%', 'luk3%'],
         },
       }
@@ -1536,6 +1548,35 @@ describe('QueryBuilder', () => {
         sqlite3: {
           sql: 'select * from `users` where (`a`, `b`) in ( values (?, ?), (?, ?), (?, ?))',
           bindings: [1, 2, 3, 4, 5, 6],
+        },
+      }
+    );
+  });
+
+  it('correctly orders value placeholders for .whereIn(knex.raw())', () => {
+    testsql(
+      qb()
+        .select('*')
+        .from('users')
+        // COALESCE() is used here simply to generate a valid left-hand-side
+        // to the expression lhs IN rhs that can take a value parameter
+        .whereIn(raw('COALESCE(??, ?)', ['id', 9]), [1, 2, 3]),
+      {
+        mysql: {
+          sql: 'select * from `users` where COALESCE(`id`, ?) in (?, ?, ?)',
+          bindings: [9, 1, 2, 3],
+        },
+        mssql: {
+          sql: 'select * from [users] where COALESCE([id], ?) in (?, ?, ?)',
+          bindings: [9, 1, 2, 3],
+        },
+        pg: {
+          sql: 'select * from "users" where COALESCE("id", ?) in (?, ?, ?)',
+          bindings: [9, 1, 2, 3],
+        },
+        'pg-redshift': {
+          sql: 'select * from "users" where COALESCE("id", ?) in (?, ?, ?)',
+          bindings: [9, 1, 2, 3],
         },
       }
     );
